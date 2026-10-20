@@ -1,0 +1,46 @@
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\AdminMiddleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Middleware
+        |--------------------------------------------------------------------------
+        */
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SSLCOMMERZ CSRF Exception
+        |--------------------------------------------------------------------------
+        */
+
+        $middleware->validateCsrfTokens(except: [
+            'payment/sslcommerz/ipn',
+            'payment/sslcommerz/success',
+            'payment/sslcommerz/fail',
+            'payment/sslcommerz/cancel',
+        ]);
+
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        //
+    })
+    ->create();
+
+

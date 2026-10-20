@@ -1,0 +1,9 @@
+html{-webkit-text-size-adjust:100%}
+:where(a,button,input,select,textarea,summary):focus-visible{outline:2px solid var(--ibl-brand,#4f46e5);outline-offset:2px}
+@media (max-width:767.98px){input.form-control,select.form-select,textarea.form-control{font-size:16px}}
+.btn:not(.btn-sm):not(.btn-close){min-height:44px}
+.form-control:not(textarea),.form-select{min-height:44px}
+.premium-product-card .media-actions a,.premium-product-card .media-actions button{min-width:40px;min-height:40px}
+.price-row strong,.product-price,.cart-total,.order-total{font-variant-numeric:tabular-nums}
+.premium-product-card .product-media img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.premium-product-card h3,.product-card h5,.product-card .card-title{overflow-wrap:anywhere}

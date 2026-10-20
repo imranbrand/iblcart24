@@ -1,0 +1,590 @@
+.dashboard-header {
+    margin-bottom: 25px;
+}
+
+.dashboard-welcome {
+    font-size: 25px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 5px;
+}
+
+.dashboard-description {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0;
+}
+
+
+/* =====================================================
+   STAT CARDS
+===================================================== */
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all .2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 17px;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    color: #111827;
+    font-size: 24px;
+    font-weight: 850;
+    line-height: 1.2;
+}
+
+.stat-meta {
+    margin-top: 7px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+
+.stat-sales .stat-icon {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.stat-today .stat-icon {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.stat-orders .stat-icon {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.stat-pending .stat-icon {
+    background: #fefce8;
+    color: #ca8a04;
+}
+
+.stat-products .stat-icon {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.stat-category .stat-icon {
+    background: #fdf2f8;
+    color: #db2777;
+}
+
+.stat-stock .stat-icon {
+    background: #f0fdfa;
+    color: #0f766e;
+}
+
+.stat-cart .stat-icon {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+
+/* =====================================================
+   COMMON CARD
+===================================================== */
+
+.dashboard-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.dashboard-card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.dashboard-card-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+}
+
+.dashboard-card-subtitle {
+    color: #94a3b8;
+    font-size: 11px;
+    margin: 3px 0 0;
+}
+
+.dashboard-card-body {
+    padding: 20px;
+}
+
+
+/* =====================================================
+   QUICK ACTIONS
+===================================================== */
+
+.quick-action {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all .2s ease;
+    height: 100%;
+}
+
+.quick-action:hover {
+    border-color: #c7d2fe;
+    background: #f8faff;
+    transform: translateY(-2px);
+}
+
+.quick-action-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.quick-action-title {
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 3px;
+}
+
+.quick-action-text {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   ORDER STATUS
+===================================================== */
+
+.status-row {
+    margin-bottom: 17px;
+}
+
+.status-row:last-child {
+    margin-bottom: 0;
+}
+
+.status-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 7px;
+}
+
+.status-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.status-count {
+    font-size: 11px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.status-progress {
+    height: 7px;
+    background: #f1f5f9;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.status-progress-bar {
+    height: 100%;
+    border-radius: 20px;
+}
+
+.status-pending {
+    background: #f59e0b;
+}
+
+.status-confirmed {
+    background: #3b82f6;
+}
+
+.status-processing {
+    background: #8b5cf6;
+}
+
+.status-shipped {
+    background: #06b6d4;
+}
+
+.status-delivered {
+    background: #10b981;
+}
+
+.status-cancelled {
+    background: #ef4444;
+}
+
+
+/* =====================================================
+   LOW STOCK
+===================================================== */
+
+.low-stock-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.low-stock-item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.product-mini {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.product-mini-image {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+}
+
+.product-mini-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+}
+
+.product-mini-category {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.stock-badge {
+    padding: 5px 8px;
+    border-radius: 7px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.dashboard-table {
+    width: 100%;
+    margin: 0;
+}
+
+.dashboard-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.dashboard-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 11px;
+    color: #475569;
+}
+
+.dashboard-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.dashboard-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.order-id {
+    color: #4f46e5;
+    font-weight: 800;
+}
+
+.customer-name {
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.amount {
+    color: #111827;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   STATUS BADGES
+===================================================== */
+
+.order-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 7px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.status-badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge-confirmed {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-badge-processing {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.status-badge-shipped {
+    background: #cffafe;
+    color: #0e7490;
+}
+
+.status-badge-delivered {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.status-badge-cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   PRODUCT TABLE
+===================================================== */
+
+.table-product {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-product-image {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 9px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.table-product-name {
+    font-size: 11px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.category-text {
+    font-size: 10px;
+    color: #64748b;
+}
+
+
+/* =====================================================
+   TOP PRODUCTS
+===================================================== */
+
+.top-product {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.top-product:last-child {
+    border-bottom: 0;
+}
+
+.top-product-rank {
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.top-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.top-product-name {
+    font-size: 11px;
+    font-weight: 800;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.top-product-sales {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+
+/* =====================================================
+   MONTHLY SALES
+===================================================== */
+
+.sales-chart-wrapper {
+    position: relative;
+    height: 290px;
+}
+
+.sales-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.empty-state {
+    padding: 30px 15px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: #cbd5e1;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 11px;
+}
+
+
+/* =====================================================
+   VIEW ALL
+===================================================== */
+
+.view-all {
+    color: #4f46e5;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.view-all:hover {
+    color: #3730a3;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 767px) {
+
+    .dashboard-welcome {
+        font-size: 21px;
+    }
+
+    .dashboard-card-header {
+        padding: 15px;
+    }
+
+    .dashboard-card-body {
+        padding: 15px;
+    }
+
+    .sales-chart-wrapper {
+        height: 230px;
+    }
+
+    .dashboard-table {
+        min-width: 700px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+}

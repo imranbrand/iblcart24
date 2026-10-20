@@ -1,0 +1,181 @@
+.page-header {
+    background: #212529;
+    color: white;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.product-card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+    height: 100%;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.product-image {
+    height: 230px;
+    object-fit: cover;
+    width: 100%;
+    background: #f1f1f1;
+}
+
+.price {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.category-badge {
+    font-size: 12px;
+}
+
+.search-box {
+    border-radius: 10px;
+}
+
+.filter-box {
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.pagination {
+    justify-content: center;
+}
+
+/*
+|--------------------------------------------------------------------------
+| WISHLIST
+|--------------------------------------------------------------------------
+*/
+
+.wishlist-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: #ffffff;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s ease;
+}
+
+.wishlist-btn:hover {
+    background: #dc3545;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.wishlist-btn.active {
+    background: #dc3545;
+    color: #ffffff;
+}
+
+.wishlist-btn i {
+    font-size: 18px;
+}
+
+.wishlist-label {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 5;
+}
+
+.wishlist-tooltip {
+    position: absolute;
+    right: 52px;
+    top: 8px;
+    background: #212529;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.2s;
+}
+
+.wishlist-label:hover .wishlist-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/*
+|--------------------------------------------------------------------------
+| STOCK
+|--------------------------------------------------------------------------
+*/
+
+.stock-low {
+    background: #ffc107 !important;
+    color: #212529 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ACTIONS
+|--------------------------------------------------------------------------
+*/
+
+.admin-actions {
+    border-top: 1px solid #eeeeee;
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PRODUCT TEXT
+|--------------------------------------------------------------------------
+*/
+
+.product-description {
+    min-height: 42px;
+}
+
+.product-title {
+    min-height: 48px;
+}
+
+.product-card .card-body {
+    min-height: 330px;
+}
+
+.empty-product-icon {
+    opacity: 0.7;
+}
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSIVE
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 575.98px) {
+
+    .page-header {
+        padding: 20px;
+    }
+
+    .product-image {
+        height: 210px;
+    }
+
+    .product-card .card-body {
+        min-height: auto;
+    }
+
+}
