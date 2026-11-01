@@ -1,3 +1,7 @@
+@php
+    // Admin mode: controller flag OR logged-in admin user
+    $isAdmin = (bool) (($isAdmin ?? false) || (auth()->user()?->isAdmin() ?? false));
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -438,138 +442,161 @@
 
 
 
-    <!-- =====================================================
-         ORDER PROGRESS
+        <!-- =====================================================
+         ORDER PROGRESS (icon-driven, admin can act from here)
     ====================================================== -->
+
+    <style>
+        .ibl-flow{display:flex;align-items:flex-start;overflow-x:auto;padding:8px 4px 4px;gap:0}
+        .ibl-step{flex:1 1 0;min-width:88px;text-align:center;position:relative}
+        .ibl-step::before{content:"";position:absolute;top:25px;left:-50%;width:100%;height:4px;background:#e5e7eb;z-index:0}
+        .ibl-step:first-child::before{display:none}
+        .ibl-step.done::before,.ibl-step.current::before{background:#198754}
+        .ibl-step form{margin:0}
+        .ibl-dot{position:relative;z-index:1;width:54px;height:54px;border-radius:50%;border:3px solid #e5e7eb;background:#fff;color:#9ca3af;display:inline-flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+        button.ibl-dot{cursor:pointer;padding:0}
+        .ibl-step.done .ibl-dot{background:#198754;border-color:#198754;color:#fff}
+        .ibl-step.current .ibl-dot{background:#0d6efd;border-color:#0d6efd;color:#fff;box-shadow:0 0 0 6px rgba(13,110,253,.15)}
+        .ibl-step.next .ibl-dot{border-color:#0d6efd;color:#0d6efd;border-style:dashed}
+        .ibl-step.next button.ibl-dot:hover{background:#0d6efd;color:#fff;transform:scale(1.08)}
+        .ibl-label{margin-top:8px;font-size:13px;font-weight:600;color:#6b7280}
+        .ibl-step.done .ibl-label,.ibl-step.current .ibl-label{color:#111827}
+        .ibl-hint{font-size:11px;color:#0d6efd;font-weight:600}
+        .ibl-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:22px;padding-top:18px;border-top:1px solid #eef0f3}
+    </style>
 
     @if($status !== 'cancelled')
 
         @php
-
-            $statusOrder = [
-                'pending' => 0,
-                'confirmed' => 1,
-                'processing' => 2,
-                'shipped' => 3,
-                'delivered' => 4,
+            $flow = [
+                ['key' => 'pending',    'label' => 'Pending',    'icon' => 'fa-clock',        'action' => null],
+                ['key' => 'confirmed',  'label' => 'Confirmed',  'icon' => 'fa-circle-check', 'action' => 'Confirm Order'],
+                ['key' => 'processing', 'label' => 'Processing', 'icon' => 'fa-gears',        'action' => 'Start Processing'],
+                ['key' => 'shipped',    'label' => 'Shipped',    'icon' => 'fa-truck',        'action' => 'Mark as Shipped'],
+                ['key' => 'delivered',  'label' => 'Delivered',  'icon' => 'fa-box-open',     'action' => 'Mark as Delivered'],
             ];
 
-            $currentStep = $statusOrder[$status] ?? 0;
-
+            $currentStep = collect($flow)->search(fn ($s) => $s['key'] === $status);
+            $currentStep = $currentStep === false ? 0 : $currentStep;
+            $nextStep = $flow[$currentStep + 1] ?? null;
+            $adminView = (bool) ($isAdmin ?? false);
         @endphp
-
 
         <div class="card card-box mb-4">
 
             <div class="section-header">
-
                 <div class="d-flex align-items-center">
-
-                    <span class="icon-heading">
-
-                        <i class="fa-solid fa-route"></i>
-
-                    </span>
-
+                    <span class="icon-heading"><i class="fa-solid fa-route"></i></span>
                     <div>
-
-                        <h5 class="section-title">
-                            Order Progress
-                        </h5>
-
+                        <h5 class="section-title">Order Progress</h5>
                         <div class="section-subtitle">
-                            Current order fulfillment stage
+                            {{ $adminView ? 'Click the highlighted icon to move this order to the next stage' : 'Current order fulfillment stage' }}
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
 
             <div class="section-body">
 
-                <div class="timeline">
+                <div class="ibl-flow">
 
-                    <div class="timeline-line"></div>
+                    @foreach($flow as $i => $step)
 
+                        @php
+                            $state = $i < $currentStep ? 'done'
+                                   : ($i === $currentStep ? 'current'
+                                   : ($i === $currentStep + 1 ? 'next' : 'locked'));
+                        @endphp
 
-                    <div class="timeline-step {{ $currentStep >= 0 ? 'active' : '' }}">
+                        <div class="ibl-step {{ $state }}">
 
-                        <div class="timeline-dot">
+                            @if($adminView && $state === 'next')
 
-                            <i class="fa-solid fa-clock"></i>
+                                <form
+                                    action="{{ route('admin.orders.status.update', $order) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('{{ $step['action'] }} for Order #{{ $order->id }}?');"
+                                >
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="{{ $step['key'] }}">
+                                    <button type="submit" class="ibl-dot" title="{{ $step['action'] }}">
+                                        <i class="fa-solid {{ $step['icon'] }}"></i>
+                                    </button>
+                                </form>
 
-                        </div>
+                            @else
 
-                        <div class="timeline-label">
-                            Pending
-                        </div>
+                                <span class="ibl-dot">
+                                    <i class="fa-solid {{ $state === 'done' ? 'fa-check' : $step['icon'] }}"></i>
+                                </span>
 
-                    </div>
+                            @endif
 
+                            <div class="ibl-label">{{ $step['label'] }}</div>
 
-                    <div class="timeline-step {{ $currentStep >= 1 ? 'active' : '' }}">
-
-                        <div class="timeline-dot">
-
-                            <i class="fa-solid fa-circle-check"></i>
-
-                        </div>
-
-                        <div class="timeline-label">
-                            Confirmed
-                        </div>
-
-                    </div>
-
-
-                    <div class="timeline-step {{ $currentStep >= 2 ? 'active' : '' }}">
-
-                        <div class="timeline-dot">
-
-                            <i class="fa-solid fa-gears"></i>
-
-                        </div>
-
-                        <div class="timeline-label">
-                            Processing
-                        </div>
-
-                    </div>
-
-
-                    <div class="timeline-step {{ $currentStep >= 3 ? 'active' : '' }}">
-
-                        <div class="timeline-dot">
-
-                            <i class="fa-solid fa-truck"></i>
+                            @if($adminView && $state === 'next')
+                                <div class="ibl-hint">Click to {{ strtolower($step['action']) }}</div>
+                            @endif
 
                         </div>
 
-                        <div class="timeline-label">
-                            Shipped
-                        </div>
-
-                    </div>
-
-
-                    <div class="timeline-step {{ $currentStep >= 4 ? 'active' : '' }}">
-
-                        <div class="timeline-dot">
-
-                            <i class="fa-solid fa-box-open"></i>
-
-                        </div>
-
-                        <div class="timeline-label">
-                            Delivered
-                        </div>
-
-                    </div>
+                    @endforeach
 
                 </div>
+
+
+                @if($adminView)
+
+                    <div class="ibl-actions no-print">
+
+                        @if($nextStep)
+
+                            <form
+                                action="{{ route('admin.orders.status.update', $order) }}"
+                                method="POST"
+                                onsubmit="return confirm('{{ $nextStep['action'] }} for Order #{{ $order->id }}?');"
+                            >
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="{{ $nextStep['key'] }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid {{ $nextStep['icon'] }} me-1"></i>
+                                    {{ $nextStep['action'] }}
+                                </button>
+                            </form>
+
+                        @else
+
+                            <span class="text-success fw-semibold">
+                                <i class="fa-solid fa-circle-check me-1"></i>
+                                Order completed
+                            </span>
+
+                        @endif
+
+
+                        @if($status !== 'delivered')
+
+                            <form
+                                action="{{ route('admin.orders.status.update', $order) }}"
+                                method="POST"
+                                onsubmit="return confirm('Cancel Order #{{ $order->id }}? This cannot be undone easily.');"
+                            >
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="cancelled">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i>
+                                    Cancel Order
+                                </button>
+                            </form>
+
+                        @endif
+
+                    </div>
+
+                @endif
 
             </div>
 
@@ -578,36 +605,19 @@
     @else
 
         <div class="card card-box mb-4">
-
             <div class="section-body">
-
                 <div class="d-flex align-items-center gap-3">
-
-                    <div
-                        class="action-icon danger"
-                        style="width:48px;height:48px;"
-                    >
-
+                    <div class="action-icon danger" style="width:48px;height:48px;">
                         <i class="fa-solid fa-circle-xmark"></i>
-
                     </div>
-
                     <div>
-
-                        <div class="fw-bold">
-                            Order Cancelled
-                        </div>
-
+                        <div class="fw-bold">Order Cancelled</div>
                         <div class="small text-muted">
                             This order has been cancelled and is no longer active.
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
     @endif

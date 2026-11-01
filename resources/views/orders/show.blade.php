@@ -1,456 +1,430 @@
-@extends('layouts.storefront')
+<!DOCTYPE html>
+<html lang="en">
 
-@section('content')
+<head>
 
-@php
-    /*
-    |--------------------------------------------------------------------------
-    | ORDER STATUS
-    |--------------------------------------------------------------------------
-    */
+    <meta charset="UTF-8">
 
-    $currentStatus = strtolower(trim((string) ($order->status ?? 'pending')));
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    $statusConfig = [
-        'pending' => [
-            'label' => 'Pending',
-            'icon' => 'fa-clock',
-            'class' => 'status-pending',
-            'description' => 'Your order has been received and is waiting for confirmation.',
-        ],
+    <meta
+        name="csrf-token"
+        content="{{ csrf_token() }}"
+    >
 
-        'confirmed' => [
-            'label' => 'Confirmed',
-            'icon' => 'fa-circle-check',
-            'class' => 'status-confirmed',
-            'description' => 'Your order has been confirmed and will be prepared soon.',
-        ],
+    <title>
+        Order #{{ $order->id }} - IBL CART 24
+    </title>
 
-        'processing' => [
-            'label' => 'Processing',
-            'icon' => 'fa-box-open',
-            'class' => 'status-processing',
-            'description' => 'Your order is currently being prepared.',
-        ],
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-        'shipped' => [
-            'label' => 'Shipped',
-            'icon' => 'fa-truck-fast',
-            'class' => 'status-shipped',
-            'description' => 'Your order is on the way to your delivery address.',
-        ],
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
 
-        'delivered' => [
-            'label' => 'Delivered',
-            'icon' => 'fa-house-circle-check',
-            'class' => 'status-delivered',
-            'description' => 'Your order has been successfully delivered.',
-        ],
+    <link rel="stylesheet" href="{{ asset('css/pages/admin-orders-show.css') }}?v=b3">
 
-        'cancelled' => [
-            'label' => 'Cancelled',
-            'icon' => 'fa-circle-xmark',
-            'class' => 'status-cancelled',
-            'description' => 'This order has been cancelled.',
-        ],
-    ];
-
-    $status = $statusConfig[$currentStatus]
-        ?? [
-            'label' => ucfirst($currentStatus),
-            'icon' => 'fa-circle-info',
-            'class' => 'status-default',
-            'description' => 'Your order status has been updated.',
-        ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | TRACKING
-    |--------------------------------------------------------------------------
-    */
-
-    $trackingStatuses = [
-        'pending',
-        'confirmed',
-        'processing',
-        'shipped',
-        'delivered',
-    ];
-
-    $currentIndex = array_search(
-        $currentStatus,
-        $trackingStatuses,
-        true
-    );
-
-    if ($currentIndex === false) {
-        $currentIndex = 0;
-    }
-
-    $progressPercent = count($trackingStatuses) > 1
-        ? ($currentIndex / (count($trackingStatuses) - 1)) * 100
-        : 0;
-
-    /*
-    |--------------------------------------------------------------------------
-    | PAYMENT STATUS
-    |--------------------------------------------------------------------------
-    */
-
-    $paymentStatus = strtolower(
-        trim((string) ($order->payment_status ?? 'pending'))
-    );
-
-    $paymentConfig = [
-        'paid' => [
-            'label' => 'Paid',
-            'icon' => 'fa-circle-check',
-            'class' => 'payment-paid',
-        ],
-
-        'failed' => [
-            'label' => 'Failed',
-            'icon' => 'fa-circle-xmark',
-            'class' => 'payment-failed',
-        ],
-
-        'refunded' => [
-            'label' => 'Refunded',
-            'icon' => 'fa-rotate-left',
-            'class' => 'payment-refunded',
-        ],
-
-        'pending' => [
-            'label' => 'Pending',
-            'icon' => 'fa-clock',
-            'class' => 'payment-pending',
-        ],
-    ];
-
-    $payment = $paymentConfig[$paymentStatus]
-        ?? [
-            'label' => ucfirst($paymentStatus),
-            'icon' => 'fa-circle-info',
-            'class' => 'payment-default',
-        ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | ORDER TOTALS
-    |--------------------------------------------------------------------------
-    */
-
-    $subtotal = (float) (
-        $order->subtotal
-        ?? 0
-    );
-
-    $deliveryCharge = (float) (
-        $order->delivery_charge
-        ?? 0
-    );
-
-    $totalAmount = (float) (
-        $order->total_amount
-        ?? $order->total
-        ?? ($subtotal + $deliveryCharge)
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | ORDER DATE
-    |--------------------------------------------------------------------------
-    */
-
-    $orderDate = $order->created_at
-        ? $order->created_at->format('d M Y, h:i A')
-        : 'N/A';
-
-    /*
-    |--------------------------------------------------------------------------
-    | PAYMENT DATE
-    |--------------------------------------------------------------------------
-    */
-
-    $paidDate = null;
-
-    if (!empty($order->paid_at)) {
-        try {
-            $paidDate = \Carbon\Carbon::parse(
-                $order->paid_at
-            )->format('d M Y, h:i A');
-        } catch (\Throwable $e) {
-            $paidDate = null;
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PAYMENT METHOD
-    |--------------------------------------------------------------------------
-    */
-
-    $paymentMethod = $order->payment_method
-        ?? 'Cash on Delivery';
-@endphp
+</head>
 
 
-<link rel="stylesheet" href="{{ asset('css/pages/orders-show.css') }}?v=b3">
+<body>
 
 
-<div class="order-page">
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
 
-    <div class="container">
+<nav class="navbar navbar-expand-lg bg-white shadow-sm no-print">
 
-        {{-- ============================================================
-             HEADER
-        ============================================================= --}}
+    <div class="container-fluid px-4">
 
-        <div class="order-header no-print">
+        <div class="d-flex align-items-center">
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            @if($isAdmin ?? false)
 
-                <div class="order-header-left">
+                <a
+                    class="navbar-brand text-dark text-decoration-none d-flex align-items-center gap-2"
+                    href="{{ route('admin.dashboard') }}"
+                >
 
-                    <div class="order-header-icon">
+                    <span class="brand-icon">
 
-                        <i class="fa-solid fa-receipt"></i>
+                        <i class="fa-solid fa-cart-shopping"></i>
+
+                    </span>
+
+                    <span>
+                        IBL CART 24
+                    </span>
+
+                </a>
+
+            @else
+
+                <a
+                    class="navbar-brand text-dark text-decoration-none d-flex align-items-center gap-2"
+                    href="{{ route('home') }}"
+                >
+
+                    <span class="brand-icon">
+
+                        <i class="fa-solid fa-cart-shopping"></i>
+
+                    </span>
+
+                    <span>
+                        IBL CART 24
+                    </span>
+
+                </a>
+
+            @endif
+
+        </div>
+
+
+        <div class="ms-auto d-flex flex-wrap gap-2">
+
+            @if($isAdmin ?? false)
+
+                <a
+                    href="{{ route('orders.invoice', $order) }}"
+                    class="btn btn-outline-secondary btn-sm"
+                >
+                    <i class="fa-solid fa-file-pdf me-1"></i>
+                    Invoice PDF
+                </a>
+
+
+                <a
+                    href="{{ route('admin.dashboard') }}"
+                    class="btn btn-outline-dark btn-sm"
+                >
+
+                    <i class="fa-solid fa-chart-line me-1"></i>
+
+                    Dashboard
+
+                </a>
+
+                <a
+                    href="{{ route('admin.orders.index') }}"
+                    class="btn btn-primary btn-sm"
+                >
+
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+
+                    Back to Orders
+
+                </a>
+
+            @else
+
+                <a
+                    href="{{ route('orders.index') }}"
+                    class="btn btn-outline-primary btn-sm"
+                >
+
+                    <i class="fa-solid fa-receipt me-1"></i>
+
+                    My Orders
+
+                </a>
+
+                <a
+                    href="{{ route('products.index') }}"
+                    class="btn btn-outline-dark btn-sm"
+                >
+
+                    <i class="fa-solid fa-shop me-1"></i>
+
+                    Products
+
+                </a>
+
+            @endif
+
+        </div>
+
+    </div>
+
+</nav>
+
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="page-container container-fluid py-4 px-3 px-lg-4">
+
+
+    <!-- FLASH SUCCESS -->
+
+    @if(session('success'))
+
+        <div class="alert alert-success alert-dismissible fade show shadow-sm no-print mb-4">
+
+            <i class="fa-solid fa-circle-check me-2"></i>
+
+            {{ session('success') }}
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+            ></button>
+
+        </div>
+
+    @endif
+
+
+    <!-- FLASH ERROR -->
+
+    @if(session('error'))
+
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm no-print mb-4">
+
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+            {{ session('error') }}
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+            ></button>
+
+        </div>
+
+    @endif
+
+
+    <!-- VALIDATION ERRORS -->
+
+    @if($errors->any())
+
+        <div class="alert alert-danger shadow-sm no-print mb-4">
+
+            <strong>
+
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+
+                Please fix the following errors:
+
+            </strong>
+
+            <ul class="mb-0 mt-2">
+
+                @foreach($errors->all() as $error)
+
+                    <li>
+                        {{ $error }}
+                    </li>
+
+                @endforeach
+
+            </ul>
+
+        </div>
+
+    @endif
+
+
+
+    <!-- =====================================================
+         PRINT HEADER
+    ====================================================== -->
+
+    <div class="print-only mb-4">
+
+        <h2 class="fw-bold">
+            IBL CART 24
+        </h2>
+
+        <h4>
+            Order #{{ $order->id }}
+        </h4>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         ORDER HERO
+    ====================================================== -->
+
+    <div class="card card-box hero-card mb-4">
+
+        <div class="card-body p-4 p-lg-5 hero-content">
+
+            <div class="row align-items-center g-4">
+
+                <div class="col-lg-7">
+
+                    <div class="eyebrow mb-2">
+                        Order Details
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+
+                        <h1 class="order-number mb-0">
+                            Order #{{ $order->id }}
+                        </h1>
+
+                        @php
+
+                            $status = strtolower(
+                                trim($order->status ?? 'pending')
+                            );
+
+                        @endphp
+
+
+                        @if($status === 'pending')
+
+                            <span class="status-badge status-pending">
+
+                                <i class="fa-solid fa-clock"></i>
+
+                                Pending
+
+                            </span>
+
+                        @elseif($status === 'confirmed')
+
+                            <span class="status-badge status-confirmed">
+
+                                <i class="fa-solid fa-circle-check"></i>
+
+                                Confirmed
+
+                            </span>
+
+                        @elseif($status === 'processing')
+
+                            <span class="status-badge status-processing">
+
+                                <i class="fa-solid fa-gears"></i>
+
+                                Processing
+
+                            </span>
+
+                        @elseif($status === 'shipped')
+
+                            <span class="status-badge status-shipped">
+
+                                <i class="fa-solid fa-truck"></i>
+
+                                Shipped
+
+                            </span>
+
+                        @elseif($status === 'delivered')
+
+                            <span class="status-badge status-delivered">
+
+                                <i class="fa-solid fa-box-open"></i>
+
+                                Delivered
+
+                            </span>
+
+                        @elseif($status === 'cancelled')
+
+                            <span class="status-badge status-cancelled">
+
+                                <i class="fa-solid fa-circle-xmark"></i>
+
+                                Cancelled
+
+                            </span>
+
+                        @else
+
+                            <span class="status-badge status-default">
+
+                                {{ ucfirst($status) }}
+
+                            </span>
+
+                        @endif
 
                     </div>
 
-                    <div>
 
-                        <div class="order-title">
+                    <div class="order-date mt-2">
 
-                            Order #{{ $order->id }}
+                        <i class="fa-regular fa-calendar me-1"></i>
 
-                        </div>
+                        @if($order->created_at)
 
-                        <div class="order-subtitle">
+                            {{ $order->created_at->format('d M Y, h:i A') }}
 
-                            <i class="fa-regular fa-calendar me-1"></i>
+                        @else
 
-                            Placed on {{ $orderDate }}
+                            N/A
 
-                        </div>
+                        @endif
 
                     </div>
 
                 </div>
 
 
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="col-lg-5">
 
-                    @if($currentStatus === 'pending' && strtolower((string) $order->payment_status) !== 'paid' && (int) $order->user_id === (int) auth()->id())
-                        <form method="POST" action="{{ route('orders.cancel', $order) }}" onsubmit="return confirm('Cancel this order? This cannot be undone.');">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-danger order-action-btn">
-                                <i class="fa-solid fa-ban me-1"></i>
-                                Cancel Order
-                            </button>
-                        </form>
-                    @endif
+                    <div class="d-flex flex-wrap justify-content-lg-end gap-2 no-print">
 
-                    <a
-                        href="{{ route('orders.invoice', $order) }}"
-                        class="btn btn-outline-primary order-action-btn"
-                    >
-                        <i class="fa-solid fa-file-pdf me-1"></i>
-                        Invoice PDF
-                    </a>
+                        <button
+                            type="button"
+                            class="btn btn-dark"
+                            onclick="window.print();"
+                        >
 
-                    <form method="POST" action="{{ route('orders.reorder', $order) }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-success order-action-btn">
-                            <i class="fa-solid fa-rotate-right me-1"></i>
-                            Order again
+                            <i class="fa-solid fa-print me-1"></i>
+
+                            Print Order
+
                         </button>
-                    </form>
 
-                    <button
-                        type="button"
-                        onclick="window.print()"
-                        class="btn btn-print order-action-btn"
-                    >
 
-                        <i class="fa-solid fa-print me-1"></i>
+                        @if($isAdmin ?? false)
 
-                        Print Order
+                            <a
+                                href="{{ route('admin.orders.index') }}"
+                                class="btn btn-outline-primary"
+                            >
 
-                    </button>
+                                <i class="fa-solid fa-arrow-left me-1"></i>
 
+                                Orders
 
-                    <a
-                        href="{{ route('orders.index') }}"
-                        class="btn btn-dark order-action-btn"
-                    >
+                            </a>
 
-                        <i class="fa-solid fa-arrow-left me-1"></i>
+                        @else
 
-                        My Orders
+                            <a
+                                href="{{ route('orders.index') }}"
+                                class="btn btn-outline-primary"
+                            >
 
-                    </a>
+                                <i class="fa-solid fa-arrow-left me-1"></i>
 
-                </div>
+                                My Orders
 
-            </div>
+                            </a>
 
-        </div>
-
-
-        {{-- ============================================================
-             SUCCESS MESSAGE
-        ============================================================= --}}
-
-        @if(session('success'))
-
-            <div class="alert alert-success alert-dismissible fade show order-alert no-print">
-
-                <div class="d-flex align-items-center">
-
-                    <i class="fa-solid fa-circle-check fs-5 me-3"></i>
-
-                    <div>
-
-                        <strong>Order Successful</strong>
-
-                        <div class="small mt-1">
-
-                            {{ session('success') }}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                ></button>
-
-            </div>
-
-        @endif
-
-
-        {{-- ============================================================
-             ERROR
-        ============================================================= --}}
-
-        @if(session('error'))
-
-            <div class="alert alert-danger alert-dismissible fade show order-alert no-print">
-
-                <div class="d-flex align-items-center">
-
-                    <i class="fa-solid fa-circle-exclamation fs-5 me-3"></i>
-
-                    <div>
-
-                        <strong>Something went wrong</strong>
-
-                        <div class="small mt-1">
-
-                            {{ session('error') }}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                ></button>
-
-            </div>
-
-        @endif
-
-
-        {{-- ============================================================
-             VALIDATION ERRORS
-        ============================================================= --}}
-
-        @if($errors->any())
-
-            <div class="alert alert-danger order-alert no-print">
-
-                <strong>
-
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
-
-                    Please fix the following errors:
-
-                </strong>
-
-                <ul class="mb-0 mt-2">
-
-                    @foreach($errors->all() as $error)
-
-                        <li>{{ $error }}</li>
-
-                    @endforeach
-
-                </ul>
-
-            </div>
-
-        @endif
-
-
-        {{-- ============================================================
-             PREMIUM ORDER HERO
-        ============================================================= --}}
-
-        <div class="order-hero mb-4">
-
-            <div class="order-hero-content">
-
-                <div class="row align-items-center g-4">
-
-                    <div class="col-lg-7">
-
-                        <div class="order-hero-label">
-
-                            IBL CART 24
-
-                        </div>
-
-                        <div class="order-hero-number">
-
-                            Order #{{ $order->id }}
-
-                        </div>
-
-                        <div class="order-hero-date">
-
-                            Thank you for shopping with us.
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="col-lg-5 text-lg-end">
-
-                        <div class="small opacity-75 mb-2">
-
-                            Current Order Status
-
-                        </div>
-
-                        <span class="status-badge {{ $status['class'] }}">
-
-                            <i class="fa-solid {{ $status['icon'] }}"></i>
-
-                            {{ $status['label'] }}
-
-                        </span>
+                        @endif
 
                     </div>
 
@@ -460,314 +434,161 @@
 
         </div>
 
+    </div>
 
-        {{-- ============================================================
-             TRACK ORDER
-        ============================================================= --}}
 
-        <div class="order-card mb-4">
 
-            <div class="order-card-header">
+        <!-- =====================================================
+         ORDER PROGRESS (icon-driven, admin can act from here)
+    ====================================================== -->
 
-                <h5 class="order-card-title">
+    <style>
+        .ibl-flow{display:flex;align-items:flex-start;overflow-x:auto;padding:8px 4px 4px;gap:0}
+        .ibl-step{flex:1 1 0;min-width:88px;text-align:center;position:relative}
+        .ibl-step::before{content:"";position:absolute;top:25px;left:-50%;width:100%;height:4px;background:#e5e7eb;z-index:0}
+        .ibl-step:first-child::before{display:none}
+        .ibl-step.done::before,.ibl-step.current::before{background:#198754}
+        .ibl-step form{margin:0}
+        .ibl-dot{position:relative;z-index:1;width:54px;height:54px;border-radius:50%;border:3px solid #e5e7eb;background:#fff;color:#9ca3af;display:inline-flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+        button.ibl-dot{cursor:pointer;padding:0}
+        .ibl-step.done .ibl-dot{background:#198754;border-color:#198754;color:#fff}
+        .ibl-step.current .ibl-dot{background:#0d6efd;border-color:#0d6efd;color:#fff;box-shadow:0 0 0 6px rgba(13,110,253,.15)}
+        .ibl-step.next .ibl-dot{border-color:#0d6efd;color:#0d6efd;border-style:dashed}
+        .ibl-step.next button.ibl-dot:hover{background:#0d6efd;color:#fff;transform:scale(1.08)}
+        .ibl-label{margin-top:8px;font-size:13px;font-weight:600;color:#6b7280}
+        .ibl-step.done .ibl-label,.ibl-step.current .ibl-label{color:#111827}
+        .ibl-hint{font-size:11px;color:#0d6efd;font-weight:600}
+        .ibl-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:22px;padding-top:18px;border-top:1px solid #eef0f3}
+    </style>
 
-                    <i class="fa-solid fa-location-crosshairs"></i>
+    @if($status !== 'cancelled')
 
-                    Track Your Order
+        @php
+            $flow = [
+                ['key' => 'pending',    'label' => 'Pending',    'icon' => 'fa-clock',        'action' => null],
+                ['key' => 'confirmed',  'label' => 'Confirmed',  'icon' => 'fa-circle-check', 'action' => 'Confirm Order'],
+                ['key' => 'processing', 'label' => 'Processing', 'icon' => 'fa-gears',        'action' => 'Start Processing'],
+                ['key' => 'shipped',    'label' => 'Shipped',    'icon' => 'fa-truck',        'action' => 'Mark as Shipped'],
+                ['key' => 'delivered',  'label' => 'Delivered',  'icon' => 'fa-box-open',     'action' => 'Mark as Delivered'],
+            ];
 
-                </h5>
+            $currentStep = collect($flow)->search(fn ($s) => $s['key'] === $status);
+            $currentStep = $currentStep === false ? 0 : $currentStep;
+            $nextStep = $flow[$currentStep + 1] ?? null;
+            $adminView = (bool) ($isAdmin ?? false);
+        @endphp
 
-                <span class="small text-muted">
+        <div class="card card-box mb-4">
 
-                    Order #{{ $order->id }}
-
-                </span>
-
+            <div class="section-header">
+                <div class="d-flex align-items-center">
+                    <span class="icon-heading"><i class="fa-solid fa-route"></i></span>
+                    <div>
+                        <h5 class="section-title">Order Progress</h5>
+                        <div class="section-subtitle">
+                            {{ $adminView ? 'Click the highlighted icon to move this order to the next stage' : 'Current order fulfillment stage' }}
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <div class="section-body">
 
-            <div class="order-card-body">
+                <div class="ibl-flow">
 
-                @if($currentStatus === 'cancelled')
+                    @foreach($flow as $i => $step)
 
-                    <div class="cancelled-box">
+                        @php
+                            $state = $i < $currentStep ? 'done'
+                                   : ($i === $currentStep ? 'current'
+                                   : ($i === $currentStep + 1 ? 'next' : 'locked'));
+                        @endphp
 
-                        <div class="cancelled-icon">
+                        <div class="ibl-step {{ $state }}">
 
-                            <i class="fa-solid fa-xmark"></i>
+                            @if($adminView && $state === 'next')
 
-                        </div>
-
-                        <div class="cancelled-title">
-
-                            Order Cancelled
-
-                        </div>
-
-                        <p class="text-muted mb-0 mt-2">
-
-                            {{ $status['description'] }}
-
-                        </p>
-
-                    </div>
-
-                @else
-
-                    {{-- CURRENT STATUS --}}
-
-                    <div class="current-status mb-4">
-
-                        <div>
-
-                            <div class="current-status-label">
-
-                                Current Status
-
-                            </div>
-
-                            <h4 class="current-status-title">
-
-                                {{ $status['label'] }}
-
-                            </h4>
-
-                            <p class="current-status-description">
-
-                                {{ $status['description'] }}
-
-                            </p>
-
-                        </div>
-
-
-                        <div>
-
-                            @if($currentStatus === 'delivered')
-
-                                <span class="badge bg-success px-3 py-2">
-
-                                    <i class="fa-solid fa-circle-check me-1"></i>
-
-                                    Order Completed
-
-                                </span>
+                                <form
+                                    action="{{ route('admin.orders.status.update', $order) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('{{ $step['action'] }} for Order #{{ $order->id }}?');"
+                                >
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="{{ $step['key'] }}">
+                                    <button type="submit" class="ibl-dot" title="{{ $step['action'] }}">
+                                        <i class="fa-solid {{ $step['icon'] }}"></i>
+                                    </button>
+                                </form>
 
                             @else
 
-                                <span class="badge bg-primary px-3 py-2">
-
-                                    <i class="fa-solid fa-truck-fast me-1"></i>
-
-                                    In Progress
-
+                                <span class="ibl-dot">
+                                    <i class="fa-solid {{ $state === 'done' ? 'fa-check' : $step['icon'] }}"></i>
                                 </span>
 
                             @endif
 
+                            <div class="ibl-label">{{ $step['label'] }}</div>
+
+                            @if($adminView && $state === 'next')
+                                <div class="ibl-hint">Click to {{ strtolower($step['action']) }}</div>
+                            @endif
+
                         </div>
 
-                    </div>
+                    @endforeach
+
+                </div>
 
 
-                    {{-- TIMELINE --}}
+                @if($adminView)
 
-                    <div class="tracking-wrapper">
+                    <div class="ibl-actions no-print">
 
-                        <div class="tracking-line"></div>
+                        @if($nextStep)
 
-                        <div
-                            class="tracking-progress"
-                            style="width: {{ $progressPercent }}%;"
-                        ></div>
-
-
-                        <div class="tracking-steps">
-
-                            {{-- PENDING --}}
-
-                            <div
-                                class="tracking-step
-                                {{ $currentIndex > 0 ? 'completed' : '' }}
-                                {{ $currentStatus === 'pending' ? 'active' : '' }}"
+                            <form
+                                action="{{ route('admin.orders.status.update', $order) }}"
+                                method="POST"
+                                onsubmit="return confirm('{{ $nextStep['action'] }} for Order #{{ $order->id }}?');"
                             >
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="{{ $nextStep['key'] }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid {{ $nextStep['icon'] }} me-1"></i>
+                                    {{ $nextStep['action'] }}
+                                </button>
+                            </form>
 
-                                <div class="tracking-icon">
+                        @else
 
-                                    @if($currentIndex > 0)
+                            <span class="text-success fw-semibold">
+                                <i class="fa-solid fa-circle-check me-1"></i>
+                                Order completed
+                            </span>
 
-                                        <i class="fa-solid fa-check"></i>
-
-                                    @else
-
-                                        <i class="fa-solid fa-clock"></i>
-
-                                    @endif
-
-                                </div>
-
-                                <div class="tracking-title">
-
-                                    Pending
-
-                                </div>
-
-                                <div class="tracking-date">
-
-                                    Order Received
-
-                                </div>
-
-                            </div>
+                        @endif
 
 
-                            {{-- CONFIRMED --}}
+                        @if($status !== 'delivered')
 
-                            <div
-                                class="tracking-step
-                                {{ $currentIndex > 1 ? 'completed' : '' }}
-                                {{ $currentStatus === 'confirmed' ? 'active' : '' }}"
+                            <form
+                                action="{{ route('admin.orders.status.update', $order) }}"
+                                method="POST"
+                                onsubmit="return confirm('Cancel Order #{{ $order->id }}? This cannot be undone easily.');"
                             >
-
-                                <div class="tracking-icon">
-
-                                    @if($currentIndex > 1)
-
-                                        <i class="fa-solid fa-check"></i>
-
-                                    @else
-
-                                        <i class="fa-solid fa-clipboard-check"></i>
-
-                                    @endif
-
-                                </div>
-
-                                <div class="tracking-title">
-
-                                    Confirmed
-
-                                </div>
-
-                                <div class="tracking-date">
-
-                                    Order Confirmed
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- PROCESSING --}}
-
-                            <div
-                                class="tracking-step
-                                {{ $currentIndex > 2 ? 'completed' : '' }}
-                                {{ $currentStatus === 'processing' ? 'active' : '' }}"
-                            >
-
-                                <div class="tracking-icon">
-
-                                    @if($currentIndex > 2)
-
-                                        <i class="fa-solid fa-check"></i>
-
-                                    @else
-
-                                        <i class="fa-solid fa-box-open"></i>
-
-                                    @endif
-
-                                </div>
-
-                                <div class="tracking-title">
-
-                                    Processing
-
-                                </div>
-
-                                <div class="tracking-date">
-
-                                    Preparing Order
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- SHIPPED --}}
-
-                            <div
-                                class="tracking-step
-                                {{ $currentIndex > 3 ? 'completed' : '' }}
-                                {{ $currentStatus === 'shipped' ? 'active' : '' }}"
-                            >
-
-                                <div class="tracking-icon">
-
-                                    @if($currentIndex > 3)
-
-                                        <i class="fa-solid fa-check"></i>
-
-                                    @else
-
-                                        <i class="fa-solid fa-truck-fast"></i>
-
-                                    @endif
-
-                                </div>
-
-                                <div class="tracking-title">
-
-                                    Shipped
-
-                                </div>
-
-                                <div class="tracking-date">
-
-                                    On The Way
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- DELIVERED --}}
-
-                            <div
-                                class="tracking-step
-                                {{ $currentStatus === 'delivered' ? 'completed active' : '' }}"
-                            >
-
-                                <div class="tracking-icon">
-
-                                    @if($currentStatus === 'delivered')
-
-                                        <i class="fa-solid fa-check"></i>
-
-                                    @else
-
-                                        <i class="fa-solid fa-house"></i>
-
-                                    @endif
-
-                                </div>
-
-                                <div class="tracking-title">
-
-                                    Delivered
-
-                                </div>
-
-                                <div class="tracking-date">
-
-                                    Order Completed
-
-                                </div>
-
-                            </div>
-
-                        </div>
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="cancelled">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i>
+                                    Cancel Order
+                                </button>
+                            </form>
+
+                        @endif
 
                     </div>
 
@@ -777,183 +598,59 @@
 
         </div>
 
+    @else
 
-        {{-- ============================================================
-             CUSTOMER + PAYMENT
-        ============================================================= --}}
+        <div class="card card-box mb-4">
+            <div class="section-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="action-icon danger" style="width:48px;height:48px;">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Order Cancelled</div>
+                        <div class="small text-muted">
+                            This order has been cancelled and is no longer active.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <div class="row g-4">
+    @endif
 
 
-            {{-- CUSTOMER INFORMATION --}}
 
-            <div class="col-lg-5">
+    <!-- =====================================================
+         CUSTOMER / PAYMENT / TOTAL
+    ====================================================== -->
 
-                <div class="order-card h-100">
+    <div class="row g-4">
 
-                    <div class="order-card-header">
 
-                        <h5 class="order-card-title">
+        <!-- CUSTOMER -->
+
+        <div class="col-xl-4 col-lg-6">
+
+            <div class="card card-box section-card">
+
+                <div class="section-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <span class="icon-heading">
 
                             <i class="fa-solid fa-user"></i>
 
-                            Customer Information
+                        </span>
 
-                        </h5>
+                        <div>
 
-                    </div>
+                            <h5 class="section-title">
+                                Customer Information
+                            </h5>
 
-
-                    <div class="order-card-body">
-
-                        <div class="info-list">
-
-
-                            {{-- NAME --}}
-
-                            <div class="info-item">
-
-                                <div class="info-icon">
-
-                                    <i class="fa-solid fa-user"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <span class="info-label">
-
-                                        Customer Name
-
-                                    </span>
-
-                                    <div class="info-value">
-
-                                        {{ $order->customer_name ?? 'N/A' }}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- PHONE --}}
-
-                            <div class="info-item">
-
-                                <div class="info-icon">
-
-                                    <i class="fa-solid fa-phone"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <span class="info-label">
-
-                                        Phone Number
-
-                                    </span>
-
-                                    <div class="info-value">
-
-                                        {{ $order->phone ?? 'N/A' }}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- ADDRESS --}}
-
-                            <div class="info-item">
-
-                                <div class="info-icon">
-
-                                    <i class="fa-solid fa-location-dot"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <span class="info-label">
-
-                                        Delivery Address
-
-                                    </span>
-
-                                    <div
-                                        class="info-value"
-                                        style="white-space: pre-line;"
-                                    >
-
-                                        {{ $order->address ?? 'N/A' }}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- ORDER DATE --}}
-
-                            <div class="info-item">
-
-                                <div class="info-icon">
-
-                                    <i class="fa-regular fa-calendar"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <span class="info-label">
-
-                                        Order Date
-
-                                    </span>
-
-                                    <div class="info-value">
-
-                                        {{ $orderDate }}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- ORDER ID --}}
-
-                            <div class="info-item">
-
-                                <div class="info-icon">
-
-                                    <i class="fa-solid fa-hashtag"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <span class="info-label">
-
-                                        Order ID
-
-                                    </span>
-
-                                    <div class="info-value">
-
-                                        #{{ $order->id }}
-
-                                    </div>
-
-                                </div>
-
+                            <div class="section-subtitle">
+                                Delivery recipient details
                             </div>
 
                         </div>
@@ -962,195 +659,401 @@
 
                 </div>
 
-            </div>
 
+                <div class="section-body">
 
-            {{-- PAYMENT INFORMATION --}}
+                    <div class="info-item">
 
-            <div class="col-lg-7">
+                        <div class="info-label">
+                            Customer Name
+                        </div>
 
-                <div class="order-card h-100">
+                        <div class="info-value">
 
-                    <div class="order-card-header">
+                            {{ $order->customer_name ?: 'Guest' }}
 
-                        <h5 class="order-card-title">
-
-                            <i class="fa-solid fa-credit-card"></i>
-
-                            Payment & Order Information
-
-                        </h5>
+                        </div>
 
                     </div>
 
 
-                    <div class="order-card-body">
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Phone Number
+                        </div>
+
+                        <div class="info-value">
+
+                            @if($order->phone)
+
+                                <a
+                                    href="tel:{{ $order->phone }}"
+                                    class="phone-link"
+                                >
+
+                                    <i class="fa-solid fa-phone me-1"></i>
+
+                                    {{ $order->phone }}
+
+                                </a>
+
+                            @else
+
+                                N/A
+
+                            @endif
+
+                        </div>
+
+                    </div>
 
 
-                        {{-- STATUS --}}
+                    <div class="info-item">
 
-                        <div class="mb-4">
+                        <div class="info-label">
+                            Delivery Address
+                        </div>
 
-                            <span class="info-label">
+                        <div class="info-value">
 
-                                Current Order Status
+                            <i class="fa-solid fa-location-dot text-danger me-1"></i>
+
+                            {!! nl2br(e($order->address ?: 'N/A')) !!}
+
+                        </div>
+
+                    </div>
+
+
+                    @if($isAdmin ?? false)
+
+                        <div class="info-item">
+
+                            <div class="info-label">
+                                User ID
+                            </div>
+
+                            <div class="info-value">
+
+                                <span class="badge bg-light text-dark border">
+
+                                    #{{ $order->user_id ?? 'Guest' }}
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- PAYMENT -->
+
+        <div class="col-xl-4 col-lg-6">
+
+            <div class="card card-box section-card">
+
+                <div class="section-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <span class="icon-heading success">
+
+                            <i class="fa-solid fa-credit-card"></i>
+
+                        </span>
+
+                        <div>
+
+                            <h5 class="section-title">
+                                Payment Information
+                            </h5>
+
+                            <div class="section-subtitle">
+                                Payment and transaction details
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="section-body">
+
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Payment Method
+                        </div>
+
+                        <div class="payment-method-box">
+
+                            <i class="fa-solid fa-wallet text-success"></i>
+
+                            {{ $order->payment_method ?: 'Cash on Delivery' }}
+
+                        </div>
+
+                    </div>
+
+
+                    @php
+
+                        $paymentStatus = strtolower(
+                            trim($order->payment_status ?? 'pending')
+                        );
+
+                    @endphp
+
+
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Payment Status
+                        </div>
+
+
+                        @if($paymentStatus === 'paid')
+
+                            <span class="status-badge bg-success text-white">
+
+                                <i class="fa-solid fa-circle-check"></i>
+
+                                Paid
 
                             </span>
 
-                            <div class="mt-2">
+                        @elseif($paymentStatus === 'failed')
 
-                                <span class="status-badge {{ $status['class'] }}">
+                            <span class="status-badge bg-danger text-white">
 
-                                    <i class="fa-solid {{ $status['icon'] }}"></i>
+                                <i class="fa-solid fa-circle-xmark"></i>
 
-                                    {{ $status['label'] }}
+                                Failed
 
-                                </span>
+                            </span>
+
+                        @elseif($paymentStatus === 'refunded')
+
+                            <span class="status-badge bg-secondary text-white">
+
+                                <i class="fa-solid fa-rotate-left"></i>
+
+                                Refunded
+
+                            </span>
+
+                        @else
+
+                            <span class="status-badge status-pending">
+
+                                <i class="fa-solid fa-clock"></i>
+
+                                Pending
+
+                            </span>
+
+                        @endif
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Subtotal
+                        </div>
+
+                        <div class="info-value">
+
+                            ৳{{ number_format(
+                                (float) ($order->subtotal ?? 0),
+                                2
+                            ) }}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Delivery Charge
+                        </div>
+
+                        <div class="info-value">
+
+                            ৳{{ number_format(
+                                (float) ($order->delivery_charge ?? 0),
+                                2
+                            ) }}
+
+                        </div>
+
+                    </div>
+
+
+                    @if($order->payment_transaction_id)
+
+                        <div class="info-item">
+
+                            <div class="info-label">
+                                Transaction ID
+                            </div>
+
+                            <div class="transaction-box">
+
+                                <code>
+                                    {{ $order->payment_transaction_id }}
+                                </code>
+
+                            </div>
+
+                            @if(auth()->user()?->isAdmin() && in_array($order->payment_method, ['bKash', 'Nagad'], true) && strtolower((string) $order->payment_status) !== 'paid' && !$order->isCancelled())
+                                <form
+                                    method="POST"
+                                    action="{{ route('admin.orders.payment.verify', $order) }}"
+                                    class="mt-2"
+                                    onsubmit="return confirm('Did you check this Transaction ID in your {{ $order->payment_method }} account and confirm the amount was received?');"
+                                >
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa-solid fa-circle-check me-1"></i>
+                                        Verify payment &amp; mark Paid
+                                    </button>
+                                </form>
+                            @endif
+
+                        </div>
+
+                    @endif
+
+                    @if($order->paid_at)
+
+                        <div class="info-item">
+
+                            <div class="info-label">
+                                Paid At
+                            </div>
+
+                            <div class="info-value">
+
+                                <i class="fa-regular fa-clock text-success me-1"></i>
+
+                                {{ $order->paid_at->format('d M Y, h:i A') }}
 
                             </div>
 
                         </div>
 
+                    @endif
 
-                        <div class="payment-grid">
+                </div>
 
+            </div>
 
-                            {{-- PAYMENT METHOD --}}
+        </div>
 
-                            <div class="payment-item">
 
-                                <span class="payment-label">
 
-                                    Payment Method
+        <!-- TOTAL -->
 
-                                </span>
+        <div class="col-xl-4 col-lg-12">
 
-                                <div class="payment-value">
+            @php
 
-                                    <i class="fa-solid fa-wallet me-1 text-muted"></i>
+                $orderTotal =
+                    $order->total_amount
+                    ?? $order->total
+                    ?? 0;
 
-                                    {{ $paymentMethod }}
+            @endphp
 
-                                </div>
 
-                            </div>
+            <div class="card total-card">
 
+                <div class="card-body p-4 p-lg-5 total-content">
 
-                            {{-- PAYMENT STATUS --}}
+                    <div class="total-label mb-2">
+                        Order Total
+                    </div>
 
-                            <div class="payment-item">
+                    <div class="total-price mb-4">
 
-                                <span class="payment-label">
+                        ৳{{ number_format(
+                            (float) $orderTotal,
+                            2
+                        ) }}
 
-                                    Payment Status
+                    </div>
 
-                                </span>
 
-                                <div>
+                    <div class="total-line">
 
-                                    <span class="payment-badge {{ $payment['class'] }}">
+                        <span>
+                            Subtotal
+                        </span>
 
-                                        <i class="fa-solid {{ $payment['icon'] }}"></i>
+                        <strong>
 
-                                        {{ $payment['label'] }}
+                            ৳{{ number_format(
+                                (float) ($order->subtotal ?? 0),
+                                2
+                            ) }}
 
-                                    </span>
+                        </strong>
 
-                                </div>
+                    </div>
 
-                            </div>
 
+                    <div class="total-line">
 
-                            {{-- TRANSACTION ID --}}
+                        <span>
+                            Delivery Charge
+                        </span>
 
-                            @if(!empty($order->payment_transaction_id))
+                        <strong>
 
-                                <div class="payment-item">
+                            ৳{{ number_format(
+                                (float) ($order->delivery_charge ?? 0),
+                                2
+                            ) }}
 
-                                    <span class="payment-label">
+                        </strong>
 
-                                        Transaction ID
+                    </div>
 
-                                    </span>
 
-                                    <div class="payment-value">
+                    <hr class="border-secondary opacity-50 my-4">
 
-                                        {{ $order->payment_transaction_id }}
 
-                                    </div>
+                    <div class="total-line total-grand mb-0">
 
-                                </div>
+                        <span class="text-white">
+                            Grand Total
+                        </span>
 
-                            @endif
+                        <strong class="text-white">
 
+                            ৳{{ number_format(
+                                (float) $orderTotal,
+                                2
+                            ) }}
 
-                            {{-- PAYMENT GATEWAY --}}
-
-                            @if(!empty($order->payment_gateway))
-
-                                <div class="payment-item">
-
-                                    <span class="payment-label">
-
-                                        Payment Gateway
-
-                                    </span>
-
-                                    <div class="payment-value">
-
-                                        {{ $order->payment_gateway }}
-
-                                    </div>
-
-                                </div>
-
-                            @endif
-
-
-                            {{-- PAID DATE --}}
-
-                            @if($paidDate)
-
-                                <div class="payment-item">
-
-                                    <span class="payment-label">
-
-                                        Paid At
-
-                                    </span>
-
-                                    <div class="payment-value">
-
-                                        <i class="fa-regular fa-clock me-1 text-muted"></i>
-
-                                        {{ $paidDate }}
-
-                                    </div>
-
-                                </div>
-
-                            @endif
-
-
-                            {{-- ORDER TOTAL --}}
-
-                            <div class="payment-item">
-
-                                <span class="payment-label">
-
-                                    Order Total
-
-                                </span>
-
-                                <div class="payment-value text-success">
-
-                                    ৳{{ number_format($totalAmount, 2) }}
-
-                                </div>
-
-                            </div>
-
-                        </div>
+                        </strong>
 
                     </div>
 
@@ -1160,148 +1063,188 @@
 
         </div>
 
+    </div>
 
-        {{-- ============================================================
-             ORDERED PRODUCTS
-        ============================================================= --}}
 
-        <div class="order-card mt-4">
 
-            <div class="order-card-header">
+    <!-- =====================================================
+         ORDER ITEMS
+    ====================================================== -->
 
-                <h5 class="order-card-title">
+    <div class="card card-box mt-4">
 
-                    <i class="fa-solid fa-bag-shopping"></i>
+        <div class="section-header">
 
-                    Ordered Products
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-                </h5>
+                <div class="d-flex align-items-center">
 
-                <span class="small text-muted">
+                    <span class="icon-heading">
 
-                    {{ $order->items->count() }}
+                        <i class="fa-solid fa-box-open"></i>
 
-                    {{ $order->items->count() === 1 ? 'Item' : 'Items' }}
+                    </span>
+
+                    <div>
+
+                        <h5 class="section-title">
+                            Order Items
+                        </h5>
+
+                        <div class="section-subtitle">
+                            Products included in this order
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <span class="badge bg-light text-dark border px-3 py-2">
+
+                    {{ $order->items?->count() ?? 0 }}
+
+                    {{ ($order->items?->count() ?? 0) === 1 ? 'Item' : 'Items' }}
 
                 </span>
 
             </div>
 
-
-            <div class="table-responsive">
-
-                <table class="table product-table align-middle mb-0">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-
-                                Product
-
-                            </th>
-
-                            <th>
-
-                                Price
-
-                            </th>
-
-                            <th>
-
-                                Quantity
-
-                            </th>
-
-                            <th>
-
-                                Subtotal
-
-                            </th>
-
-                        </tr>
-
-                    </thead>
+        </div>
 
 
-                    <tbody>
+        <div class="table-responsive">
 
-                    @forelse($order->items as $item)
+            <table class="table product-table mb-0">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Product
+                        </th>
+
+                        <th>
+                            Price
+                        </th>
+
+                        <th>
+                            Quantity
+                        </th>
+
+                        <th>
+                            Subtotal
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @forelse($order->items ?? collect() as $item)
 
                         @php
 
-                            $productName = $item->product_name
-                                ?? ($item->product->name ?? 'Product');
+                            $product = $item->product ?? null;
 
-                            $productImage = $item->product->image
-                                ?? null;
+                            $image = $product->image ?? null;
 
-                            $itemPrice = (float) (
-                                $item->price
-                                ?? 0
-                            );
-
-                            $itemQuantity = (int) (
-                                $item->quantity
-                                ?? 1
-                            );
-
-                            $itemSubtotal = (float) (
+                            $itemSubtotal =
                                 $item->subtotal
-                                ?? ($itemPrice * $itemQuantity)
-                            );
+                                ??
+                                (
+                                    ($item->price ?? 0)
+                                    *
+                                    ($item->quantity ?? 0)
+                                );
 
                         @endphp
 
 
-                        <tr class="product-row">
-
-                            {{-- PRODUCT --}}
+                        <tr>
 
                             <td>
 
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-items-center gap-3">
 
-                                    <div class="product-image-wrapper me-3">
+                                    @if($image)
 
-                                        @if($productImage)
+                                        @php
 
-                                            <img
-                                                src="{{ asset('uploads/products/' . $productImage) }}"
-                                                alt="{{ $productName }}"
-                                                class="product-image"
-                                                loading="lazy"
-                                            >
+                                            if (
+                                                str_starts_with(
+                                                    $image,
+                                                    'uploads/'
+                                                )
+                                                ||
+                                                str_starts_with(
+                                                    $image,
+                                                    'products/'
+                                                )
+                                            ) {
 
-                                        @else
+                                                $imageUrl =
+                                                    asset($image);
 
-                                            <div class="product-placeholder">
+                                            } else {
 
-                                                <i class="fa-solid fa-image"></i>
+                                                $imageUrl =
+                                                    asset(
+                                                        'storage/' .
+                                                        ltrim(
+                                                            $image,
+                                                            '/'
+                                                        )
+                                                    );
 
-                                            </div>
+                                            }
 
-                                        @endif
+                                        @endphp
 
-                                    </div>
+
+                                        <img
+                                            src="{{ $imageUrl }}"
+                                            alt="{{ $product->name ?? 'Product' }}"
+                                            class="product-image"
+                                            loading="lazy"
+                                            onerror="this.style.display='none';"
+                                        >
+
+                                    @else
+
+                                        <div class="product-placeholder">
+
+                                            <i class="fa-solid fa-box"></i>
+
+                                        </div>
+
+                                    @endif
 
 
                                     <div>
 
                                         <div class="product-name">
 
-                                            {{ $productName }}
+                                            {{ $item->product_name
+                                                ?? optional($item->product)->name
+                                                ?? 'Product'
+                                            }}
 
                                         </div>
 
-                                        <div class="product-id">
 
-                                            Product ID:
+                                        @if($product)
 
-                                            #{{ $item->product_id }}
+                                            <div class="product-id">
 
-                                        </div>
+                                                Product #{{ $product->id }}
+
+                                            </div>
+
+                                        @endif
 
                                     </div>
 
@@ -1310,39 +1253,39 @@
                             </td>
 
 
-                            {{-- PRICE --}}
-
                             <td>
 
                                 <span class="price-text">
 
-                                    ৳{{ number_format($itemPrice, 2) }}
+                                    ৳{{ number_format(
+                                        (float) ($item->price ?? 0),
+                                        2
+                                    ) }}
 
                                 </span>
 
                             </td>
 
-
-                            {{-- QUANTITY --}}
 
                             <td>
 
                                 <span class="quantity-badge">
 
-                                    {{ $itemQuantity }}
+                                    {{ $item->quantity ?? 0 }}
 
                                 </span>
 
                             </td>
 
 
-                            {{-- SUBTOTAL --}}
-
                             <td>
 
                                 <span class="subtotal-text">
 
-                                    ৳{{ number_format($itemSubtotal, 2) }}
+                                    ৳{{ number_format(
+                                        (float) $itemSubtotal,
+                                        2
+                                    ) }}
 
                                 </span>
 
@@ -1350,30 +1293,27 @@
 
                         </tr>
 
-
                     @empty
 
                         <tr>
 
                             <td colspan="4">
 
-                                <div class="empty-products">
+                                <div class="empty-state">
 
-                                    <div class="empty-products-icon">
+                                    <div class="empty-state-icon">
 
                                         <i class="fa-solid fa-box-open"></i>
 
                                     </div>
 
-                                    <h5 class="fw-bold">
+                                    <h6 class="fw-bold">
+                                        No Order Items Found
+                                    </h6>
 
-                                        No Products Found
+                                    <p class="text-muted mb-0 small">
 
-                                    </h5>
-
-                                    <p class="text-muted mb-0">
-
-                                        There are no products associated with this order.
+                                        This order does not contain any item records.
 
                                     </p>
 
@@ -1385,185 +1325,793 @@
 
                     @endforelse
 
-                    </tbody>
+                </tbody>
 
-                </table>
-
-            </div>
-
-
-            {{-- ========================================================
-                 ORDER SUMMARY
-            ========================================================= --}}
-
-            <div class="p-4 border-top">
-
-                <div class="summary-box">
-
-                    {{-- SUBTOTAL --}}
-
-                    <div class="summary-row">
-
-                        <span>
-
-                            Subtotal
-
-                        </span>
-
-                        <strong>
-
-                            ৳{{ number_format($subtotal, 2) }}
-
-                        </strong>
-
-                    </div>
-
-
-                    {{-- DELIVERY --}}
-
-                    <div class="summary-row">
-
-                        <span>
-
-                            Delivery Charge
-
-                        </span>
-
-                        <strong>
-
-                            ৳{{ number_format($deliveryCharge, 2) }}
-
-                        </strong>
-
-                    </div>
-
-
-                    <hr class="summary-divider">
-
-
-                    {{-- TOTAL --}}
-
-                    <div class="d-flex align-items-center justify-content-between">
-
-                        <span class="summary-total-label">
-
-                            Total
-
-                        </span>
-
-                        <span class="summary-total">
-
-                            ৳{{ number_format($totalAmount, 2) }}
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        {{-- ============================================================
-             ORDER NOTE
-        ============================================================= --}}
-
-        @if(!empty($order->note))
-
-            <div class="order-card mt-4">
-
-                <div class="order-card-header">
-
-                    <h5 class="order-card-title">
-
-                        <i class="fa-solid fa-note-sticky"></i>
-
-                        Order Note
-
-                    </h5>
-
-                </div>
-
-
-                <div class="order-card-body">
-
-                    <div class="order-note">
-
-                        {{ $order->note }}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        @endif
-
-
-        {{-- ============================================================
-             BOTTOM ACTIONS
-        ============================================================= --}}
-
-        <div class="order-bottom-actions no-print">
-
-            <a
-                href="{{ route('orders.index') }}"
-                class="btn btn-dark bottom-btn"
-            >
-
-                <i class="fa-solid fa-list me-1"></i>
-
-                View All Orders
-
-            </a>
-
-
-            <a
-                href="{{ route('home') }}"
-                class="btn btn-outline-dark bottom-btn"
-            >
-
-                <i class="fa-solid fa-bag-shopping me-1"></i>
-
-                Continue Shopping
-
-            </a>
-
-        </div>
-
-
-        {{-- ============================================================
-             BRAND FOOTER
-        ============================================================= --}}
-
-        <div class="text-center mt-5 text-muted no-print">
-
-            <div class="fw-bold text-dark">
-
-                IBL CART 24
-
-            </div>
-
-            <div class="small mt-1">
-
-                Shop Smart. Shop Premium.
-
-            </div>
+            </table>
 
         </div>
 
     </div>
 
-</div>
 
-@endsection
 
-@if(session('track_purchase'))
-@push('scripts')
+    <!-- =====================================================
+         CUSTOMER NOTE
+    ====================================================== -->
+
+    @if(!empty($order->note))
+
+        <div class="card card-box mt-4">
+
+            <div class="section-body">
+
+                <div class="note-box">
+
+                    <div class="d-flex gap-3">
+
+                        <div class="note-icon">
+
+                            <i class="fa-solid fa-note-sticky"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-bold mb-1">
+                                Customer Note
+                            </div>
+
+                            <div class="text-muted small">
+
+                                {{ $order->note }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+
+
+    <!-- =====================================================
+         ORDER INFORMATION
+    ====================================================== -->
+
+    <div class="card card-box mt-4">
+
+        <div class="section-header">
+
+            <div class="d-flex align-items-center">
+
+                <span class="icon-heading">
+
+                    <i class="fa-solid fa-circle-info"></i>
+
+                </span>
+
+                <div>
+
+                    <h5 class="section-title">
+                        Order Information
+                    </h5>
+
+                    <div class="section-subtitle">
+                        Complete order metadata
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-body">
+
+            <div class="row g-3">
+
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="meta-box">
+
+                        <div class="info-label">
+                            Order Number
+                        </div>
+
+                        <div class="meta-value">
+
+                            #{{ $order->id }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="meta-box">
+
+                        <div class="info-label">
+                            Order Date
+                        </div>
+
+                        <div class="meta-value">
+
+                            {{ optional($order->created_at)->format('d M Y') ?? 'N/A' }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="meta-box">
+
+                        <div class="info-label">
+                            Payment Status
+                        </div>
+
+                        <div class="meta-value">
+
+                            {{ ucfirst($paymentStatus) }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="meta-box">
+
+                        <div class="info-label">
+                            Order Status
+                        </div>
+
+                        <div class="meta-value">
+
+                            {{ ucfirst($status) }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            @if($order->payment_gateway)
+
+                <div class="row g-3 mt-1">
+
+                    <div class="col-md-6">
+
+                        <div class="meta-box">
+
+                            <div class="info-label">
+                                Payment Gateway
+                            </div>
+
+                            <div class="meta-value">
+
+                                {{ $order->payment_gateway }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    @if($order->paid_at)
+
+                        <div class="col-md-6">
+
+                            <div class="meta-box">
+
+                                <div class="info-label">
+                                    Paid At
+                                </div>
+
+                                <div class="meta-value">
+
+                                    {{ $order->paid_at->format('d M Y, h:i A') }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                </div>
+
+            @endif
+
+
+            @if($order->updated_at)
+
+                <div class="mt-4 pt-3 border-top">
+
+                    <div class="small text-muted">
+
+                        <i class="fa-regular fa-clock me-1"></i>
+
+                        Last updated:
+
+                        <strong>
+
+                            {{ $order->updated_at->format('d M Y, h:i A') }}
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            @endif
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         ADMIN ACTIONS
+    ====================================================== -->
+
+    @if($isAdmin ?? false)
+
+
+        <!-- ORDER STATUS -->
+
+        <div class="action-card mt-4 no-print">
+
+            <div class="action-header">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="action-icon">
+
+                        <i class="fa-solid fa-arrows-rotate"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+                            Update Order Status
+                        </h5>
+
+                        <div class="small text-muted">
+                            Change the current fulfillment status of this order.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="action-body">
+
+                <form
+                    action="{{ route('admin.orders.status.update', $order) }}"
+                    method="POST"
+                >
+
+                    @csrf
+
+                    @method('PATCH')
+
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-lg-8">
+
+                            <label
+                                class="form-label fw-semibold"
+                                for="status"
+                            >
+
+                                Order Status
+
+                            </label>
+
+
+                            <select
+                                name="status"
+                                id="status"
+                                class="form-select"
+                                required
+                            >
+
+                                <option
+                                    value="pending"
+                                    @selected($status === 'pending')
+                                >
+                                    Pending
+                                </option>
+
+                                <option
+                                    value="confirmed"
+                                    @selected($status === 'confirmed')
+                                >
+                                    Confirmed
+                                </option>
+
+                                <option
+                                    value="processing"
+                                    @selected($status === 'processing')
+                                >
+                                    Processing
+                                </option>
+
+                                <option
+                                    value="shipped"
+                                    @selected($status === 'shipped')
+                                >
+                                    Shipped
+                                </option>
+
+                                <option
+                                    value="delivered"
+                                    @selected($status === 'delivered')
+                                >
+                                    Delivered
+                                </option>
+
+                                <option
+                                    value="cancelled"
+                                    @selected($status === 'cancelled')
+                                >
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-lg-4">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100"
+                            >
+
+                                <i class="fa-solid fa-floppy-disk me-1"></i>
+
+                                Update Order Status
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- PAYMENT STATUS -->
+
+        <div class="action-card mt-4 no-print">
+
+            <div class="action-header">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="action-icon success">
+
+                        <i class="fa-solid fa-money-check-dollar"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+                            Update Payment Status
+                        </h5>
+
+                        <div class="small text-muted">
+                            Update the payment record for this order.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="action-body">
+
+                <form
+                    action="{{ route('admin.orders.payment.status.update', $order) }}"
+                    method="POST"
+                >
+
+                    @csrf
+
+                    @method('PATCH')
+
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-lg-8">
+
+                            <label
+                                class="form-label fw-semibold"
+                                for="payment_status"
+                            >
+
+                                Payment Status
+
+                            </label>
+
+
+                            <select
+                                name="payment_status"
+                                id="payment_status"
+                                class="form-select"
+                                required
+                            >
+
+                                <option
+                                    value="Pending"
+                                    @selected($paymentStatus === 'pending')
+                                >
+                                    Pending
+                                </option>
+
+                                <option
+                                    value="Paid"
+                                    @selected($paymentStatus === 'paid')
+                                >
+                                    Paid
+                                </option>
+
+                                <option
+                                    value="Failed"
+                                    @selected($paymentStatus === 'failed')
+                                >
+                                    Failed
+                                </option>
+
+                                <option
+                                    value="Refunded"
+                                    @selected($paymentStatus === 'refunded')
+                                >
+                                    Refunded
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-lg-4">
+
+                            <button
+                                type="submit"
+                                class="btn btn-success w-100"
+                            >
+
+                                <i class="fa-solid fa-check me-1"></i>
+
+                                Update Payment Status
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- COURIER -->
+
+        @include('admin.orders._courier')
+
+
+        <!-- DELETE ORDER -->
+
+        @php
+
+            $canDeleteOrder =
+                $status !== 'delivered'
+                &&
+                $paymentStatus !== 'paid';
+
+        @endphp
+
+
+        <div class="action-card mt-4 mb-4 no-print">
+
+            <div class="action-body">
+
+                <div class="danger-zone p-4">
+
+                    <div class="row align-items-center g-4">
+
+                        <div class="col-lg-8">
+
+                            <div class="d-flex gap-3">
+
+                                <div class="action-icon danger">
+
+                                    <i class="fa-solid fa-trash"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <h5 class="fw-bold text-danger mb-2">
+
+                                        Delete Order
+
+                                    </h5>
+
+
+                                    @if($canDeleteOrder)
+
+                                        <p class="text-muted mb-0 small">
+
+                                            This action permanently removes Order
+                                            #{{ $order->id }} and its order items.
+
+                                            @if($status !== 'cancelled')
+
+                                                Stock reserved by this order will
+                                                also be restored automatically.
+
+                                            @else
+
+                                                Stock will not be restored again
+                                                because this order is already
+                                                cancelled.
+
+                                            @endif
+
+                                        </p>
+
+                                    @else
+
+                                        <p class="text-muted mb-0 small">
+
+                                            This order cannot be deleted because it is
+
+                                            @if($status === 'delivered')
+
+                                                already delivered.
+
+                                            @elseif($paymentStatus === 'paid')
+
+                                                marked as paid.
+
+                                            @endif
+
+                                        </p>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-lg-4">
+
+                            @if($canDeleteOrder)
+
+                                <form
+                                    action="{{ route('admin.orders.destroy', $order) }}"
+                                    method="POST"
+                                    onsubmit="return confirmDeleteOrder();"
+                                >
+
+                                    @csrf
+
+                                    @method('DELETE')
+
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-danger w-100 py-2"
+                                    >
+
+                                        <i class="fa-solid fa-trash me-1"></i>
+
+                                        Delete Order
+
+                                    </button>
+
+                                </form>
+
+                            @else
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary w-100 py-2"
+                                    disabled
+                                >
+
+                                    <i class="fa-solid fa-lock me-1"></i>
+
+                                    Delete Protected
+
+                                </button>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+
+
+    <!-- =====================================================
+         FOOTER ACTIONS
+    ====================================================== -->
+
+    <div class="footer-actions d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4 mb-5 no-print">
+
+        <div>
+
+            @if($isAdmin ?? false)
+
+                <a
+                    href="{{ route('admin.orders.index') }}"
+                    class="btn btn-primary"
+                >
+
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+
+                    Back to Orders
+
+                </a>
+
+            @else
+
+                <a
+                    href="{{ route('orders.index') }}"
+                    class="btn btn-primary"
+                >
+
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+
+                    Back to My Orders
+
+                </a>
+
+            @endif
+
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <button
+                type="button"
+                class="btn btn-outline-dark"
+                onclick="window.print();"
+            >
+
+                <i class="fa-solid fa-print me-1"></i>
+
+                Print
+
+            </button>
+
+
+            @if($isAdmin ?? false)
+
+                <a
+                    href="{{ route('admin.dashboard') }}"
+                    class="btn btn-outline-secondary"
+                >
+
+                    <i class="fa-solid fa-chart-line me-1"></i>
+
+                    Dashboard
+
+                </a>
+
+            @else
+
+                <a
+                    href="{{ route('products.index') }}"
+                    class="btn btn-outline-secondary"
+                >
+
+                    <i class="fa-solid fa-shop me-1"></i>
+
+                    Continue Shopping
+
+                </a>
+
+            @endif
+
+        </div>
+
+    </div>
+
+
+</main>
+
+
+
+<!-- =========================================================
+     DELETE CONFIRMATION
+========================================================= -->
+
 <script>
-    window.iblTrack && window.iblTrack('Purchase', {value:{{ (float) ($order->total ?? $order->total_amount ?? 0) }}, currency:'BDT', transaction_id:@json((string) $order->id), contents:[], content_type:'product'});
+
+    function confirmDeleteOrder() {
+
+        return confirm(
+            "Are you sure you want to permanently delete Order #" +
+            "{{ $order->id }}" +
+            "?\n\n" +
+            "This action cannot be undone."
+        );
+
+    }
+
 </script>
-@endpush
-@endif
+
+
+
+<!-- =========================================================
+     BOOTSTRAP JS
+========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
+</body>
+
+</html>
